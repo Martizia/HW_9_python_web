@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "hw-9-python-web"
+version = "0.1.0"
+description = ""
+authors = ["Olga Mageria <olgamageria@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+scrapy = "^2.11.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
