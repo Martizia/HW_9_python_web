@@ -1,33 +1,29 @@
 import scrapy
-from scrapy.spiders import CrawlSpider, Rule
-from scrapy.linkextractors import LinkExtractor
 from ..items import QuoteItem, AuthorItem
 
 
-class AuthorsSpider(CrawlSpider):
+class QuotesCrawlerSpider(scrapy.Spider):
     name = "quotes_crawler"
     allowed_domains = ["quotes.toscrape.com"]
     start_urls = ["https://quotes.toscrape.com"]
 
-    rules = (
-        # Rule(LinkExtractor(allow=(r"/page/",), deny=(r'/tag/',)), callback='parse_quote'),
-        # Rule(LinkExtractor(allow=(r"/author/",)), callback="parse_authors"),
-        # Rule(LinkExtractor(allow=(r"/",), deny=(r'/tag/',)), callback='parse_quote'),
-        # Rule(LinkExtractor(allow=r'page', deny=r'tag'), callback='parse_quote'),
-        Rule(LinkExtractor(allow=(r'page', r'/'), deny=r'tag'), callback='parse_quote', follow=True),
-    )
+    def parse(self, response, **kwargs):
+        quotes = response.css('div.quote')
+        for q in quotes:
+            author = q.css('span small.author::text').get()
+            quote = q.css('span.text::text').get()
+            tags = q.css('div.tags a.tag::text').getall()
+            yield QuoteItem(author=author, quote=quote, tags=tags)
+            yield response.follow(url=self.start_urls[0] + q.css('span a::attr(href)').get(), callback=self.parse_author)
 
-    def parse_quote(self, response):
-        quote = QuoteItem()
-        quote['author'] = response.css('span small.author::text').get()
-        quote['quote'] = response.css('span.text::text').get()
-        quote['tags'] = response.css('div.tags a.tag::text').getall()
-        yield quote
+        next_page = response.css('li.next a::attr(href)').get()
+        if next_page:
+            yield scrapy.Request(response.urljoin(next_page), callback=self.parse)
 
-    def parse_authors(self, response):
-        author = AuthorItem()
-        author['fullname'] = response.css('h3.author-title::text').get()
-        author['born_date'] = response.css('span.author-born-date::text').get()
-        author['born_location'] = response.css('span.author-born-location::text').get()
-        author['description'] = response.css('div.author-description::text').get()
-        yield author
+    def parse_author(self, response):
+        content = response.css("div.author-details")
+        fullname = content.css('h3.author-title::text').get()
+        born_date = content.css('p span.author-born-date::text').get()
+        born_location = content.css('p span.author-born-location::text').get()
+        description = content.css('div.author-description::text').get().strip()
+        yield AuthorItem(fullname=fullname, born_date=born_date, born_location=born_location, description=description)

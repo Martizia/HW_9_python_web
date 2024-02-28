@@ -3,17 +3,17 @@
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/items.html
 
-import scrapy
+from scrapy.item import Item, Field
 
 
-class QuoteItem(scrapy.Item):
-    author = scrapy.Field()
-    quote = scrapy.Field()
-    tags = scrapy.Field()
+class QuoteItem(Item):
+    author = Field()
+    quote = Field()
+    tags = Field()
 
 
-class AuthorItem(scrapy.Item):
-    fullname = scrapy.Field()
-    born_date = scrapy.Field()
-    born_location = scrapy.Field()
-    description = scrapy.Field()
+class AuthorItem(Item):
+    fullname = Field()
+    born_date = Field()
+    born_location = Field()
+    description = Field()
